@@ -1,0 +1,77 @@
+version: '2'
+
+services:
+  proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /home/masterd/dc/d/vhost.d:/etc/nginx/vhost.d
+      - /docker/wf/proxy1/conf.d/:/etc/nginx/conf.d/
+    restart: always
+
+  trans:
+    image: linuxserver/transmission
+    volumes:
+      - '/transmission/config:/config'
+      - '/transmission/downloads:/downloads'
+      - '/transmission/watch:/watch'
+    environment:
+      - PGID=1001
+      - PUID=1001
+      - TZ=Europe/London
+    expose:
+      - "51413"
+    environment:
+      VIRTUAL_HOST: trans.trilogyphoto.co.uk
+      VIRTUAL_PORT: 9091
+    restart: always
+
+  web:
+    image: nginx:latest
+    expose:
+      - "80"
+    volumes:
+      - /docker/wf/web1/conf.d/:/etc/nginx/conf.d/
+      - /docker/wf/web1/nginx.conf:/etc/nginx/nginx.conf
+      - /docker/wf/web1/html/:/usr/share/nginx/html/
+      - ../../../volumes/proxy/certs:/etc/nginx/certs:ro
+    restart: always
+    environment:
+      VIRTUAL_HOST: trilogyphoto.co.uk, www.trilogyphoto.co.uk
+
+  netd:
+    image: titpetric/netdata
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    volumes:
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      VIRTUAL_HOST: netd.trilogyphoto.co.uk
+      VIRTUAL_PORT: 19999
+    restart: always
+
+  cp:
+    image: linuxserver/couchpotato
+    volumes:
+      - '/docker/config/cp/:/config/'
+      - '/docker/dl/cp/downloads/:/downloads/'
+      - '/docker/dl/cp/movies/:/movies/'
+    expose:
+      - 5050
+    environment:
+      - PGID=1001
+      - PUID=1001
+      - TZ=Europe/London
+    environment:
+      VIRTUAL_HOST: cp.trilogyphoto.co.uk
+
+networks:
+  default:
+    external:
+      name: pn
+

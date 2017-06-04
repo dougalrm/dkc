@@ -1,0 +1,70 @@
+version: '2'
+
+services:
+  plex:
+    image: plexinc/pms-docker
+    restart: unless-stopped
+    expose:
+      - 1900/udp
+      - 32410/udp
+      - 32469/tcp
+      - 32413/udp
+      - 32412/udp
+      - 32414/udp
+      - 3005/tcp
+      - 8324/tcp
+    environment:
+      - TZ=Europe/London
+      - PLEX_CLAIM=CLAIM-PI9ZKYVG1XRLB5CXCYWU
+      - ADVERTISE_IP=http://213.32.22.167:32400/
+    hostname: PlexServer
+    volumes:
+      - /docker/config/plex/config:/config
+      - /docker/dl/downloads/complete/transcode:/transcode
+      - /docker/dl/downloads/complete/:/data/movies
+    environment:
+      VIRTUAL_HOST: plex.trilogyphoto.co.uk
+      VIRTUAL_PORT: 32400
+      #VIRTUAL_PORT: 1900
+      #VIRTUAL_PORT: 324410
+      #VIRTUAL_PORT: 32469
+      #VIRTUAL_PORT: 32413
+      #VIRTUAL_PORT: 32412
+      #VIRTUAL_PORT: 32414
+      #VIRTUAL_PORT: 3005
+      #VIRTUAL_PORT: 8324
+    restart: always
+
+  plexpy:
+    image: linuxserver/plexpy
+    restart: unless-stopped
+    volumes:
+      - '/docker/config/plex/config/Library/Application Support/Plex Media Server/Logs:/logs:ro'
+    environment:
+      - PGID=1001
+      - PUID=1001
+      - TZ=Europe/London
+    environment:
+      VIRTUAL_HOST: plexpy.trilogyphoto.co.uk
+      VIRTUAL_PORT: 8181
+
+  ombi:
+    image: rogueosb/ombi
+    restart: unless-stopped
+    expose:
+      - 3579
+    volumes:
+      - /docker/config/plexreq/config/:/config/
+    environment:
+      - PGID:1001
+      - PUID:1001
+      - TZ=Europe/London
+      - API=dougalrm:6205fc70db95822663dd25abd10e10eedbe970da
+    environment:
+      VIRTUAL_HOST: plexreq.trilogyphoto.co.uk
+
+networks:
+  default:
+    external:
+      name: pn
+

@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+  plex:
+    image: plexinc/pms-docker
+    restart: unless-stopped
+    expose:
+      - 1900/udp
+      - 32410/udp
+      - 32469/tcp
+      - 32413/udp
+      - 32412/udp
+      - 32414/udp
+      - 3005/tcp
+      - 8324/tcp
+    environment:
+      - TZ=Europe/London
+      - PLEX_CLAIM=CLAIM-PI9ZKYVG1XRLB5CXCYWU
+      - ADVERTISE_IP=213.32.22.167:32400
+    hostname: PS
+    volumes:
+      - /docker/config/plex/config:/config
+      - /docker/dl/downloads/complete/transcode:/transcode
+      - /docker/dl/downloads/complete/:/data/movies
+    environment:
+      VIRTUAL_HOST: plex.trilogyphoto.co.uk
+      VIRTUAL_PORT: 32400
+    environment:
+      - LETSENCRYPT_HOST=plex.trilogyphoto.co.uk
+      - LETSENCRYPT_EMAIL=admin@trilogyphoto.co.uk
+    networks:
+      - n-proxy
+    restart: always
+
+  plexpy:
+    image: linuxserver/plexpy
+    restart: unless-stopped
+    volumes:
+      - '/docker/config/plex/config/Library/Application Support/Plex Media Server/Logs:/logs:ro'
+    environment:
+      - PGID=1001
+      - PUID=1001
+      - TZ=Europe/London
+    environment:
+      VIRTUAL_HOST: py.trilogyphoto.co.uk
+      VIRTUAL_PORT: 8181
+    environment:
+      - LETSENCRYPT_HOST=py.trilogyphoto.co.uk
+      - LETSENCRYPT_EMAIL=admin@trilogyphoto.co.uk
+    networks:
+      - n-proxy
+
+
+
+  ombi:
+    image: rogueosb/ombi
+    restart: unless-stopped
+    expose:
+      - 3579
+    volumes:
+      - /docker/config/plexreq/config/:/config/
+    environment:
+      - PGID:1001
+      - PUID:1001
+      - TZ=Europe/London
+      - API=dougalrm:6205fc70db95822663dd25abd10e10eedbe970da
+    environment:
+      VIRTUAL_HOST: plexreq.trilogyphoto.co.uk
+    environment:
+      - LETSENCRYPT_HOST=plexreq.trilogyphoto.co.uk
+      - LETSENCRYPT_EMAIL=admin@trilogyphoto.co.uk
+
+    networks:
+      - n-proxy
+
+
+networks:
+  n-proxy:
+    external: true
+
