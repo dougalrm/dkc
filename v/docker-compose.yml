@@ -1,0 +1,39 @@
+version: '2'
+
+services:
+  vpn:
+    cap_add:
+      - NET_ADMIN
+    image: dgray/openvpn
+    restart: always
+    ports:
+      - '1194:1194/udp'
+    volumes:
+      - ./openvpn-data/conf:/etc/openvpn
+    environment:
+      VIRTUAL_HOST: v.trilogyphoto.co.uk
+    links:
+      - dns
+  
+  
+  dns:
+    image: jpillora/dnsmasq
+    restart: always
+    expose:
+      - '53'
+      - '8080'
+    volumes: 
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+      - ./dnsmasq/dnsblocked.hosts:/etc/dnsblocked.hosts
+      - ./dnsmasq/dnsmasq.blacklist:/etc/dnsmasq.blacklist
+      - ./dnsmasq/blocked.log:/var/log/blocked.log
+    environment:
+      VIRTUAL_HOST: d.trilogyphoto.co.uk
+      VIRTUAL_PORT: 8080
+      USER: boris
+      PASS: docker
+
+networks:
+  default:
+    external:
+      name: pn
